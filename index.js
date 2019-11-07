@@ -5,7 +5,7 @@ const figlet = require('figlet')
 const chalk = require('chalk')
 
 const { euclideanDistance, manhattanDistance } = require('./lib/distances')
-const { getEstimationData, displayInfoById } = require('./lib/utils')
+const { getEstimationData, displayInfoById, Obj2Numbers } = require('./lib/utils')
 const { askToUseDefaults, askYourProjectData } = require('./lib/inquirer')
 
 clear()
@@ -38,9 +38,10 @@ askToUseDefaults()
     .then(data => {
         estimationFunction = data.estimationFunction
         delete data.estimationFunction
-        data.id = -1
+        data = Object.assign({ id: -1 }, data) // add to the beginning
         data.effort = -1
-        toEstimate = data
+
+        toEstimate = Obj2Numbers(data)
         
         console.log(`\nYour project's data to estimate`)
         console.table([toEstimate])
@@ -48,15 +49,13 @@ askToUseDefaults()
     .then(() => getEstimationData)
     .then(data => {
         projectsData = data
-        return euclideanDistance(data, toEstimate)
+        switch(estimationFunction) {
+            case 'euclidean':
+                return euclideanDistance(data, toEstimate)
+            case 'manhattan':
+                return manhattanDistance(data, toEstimate)
+            default:
+                return euclideanDistance(data, toEstimate)
+        }
     })
     .then((distance) => displayInfoById(projectsData, distance.id))
-
-
-// getEstimationData
-//     .then(data => {
-//         projectsData = data
-//         return manhattanDistance(data, toEstimate)
-//     })
-//     .then(distance => displayInfoById(projectsData, distance.id))
-//     .catch(err => console.error({err}))
